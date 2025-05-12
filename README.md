@@ -1,6 +1,6 @@
 # Hunting for Induction Heads in Amazon's Chronos Model
 
-This is the codebase for my blog post on finding induction heads in [Amazon's Chronos](https://github.com/amazon-science/chronos-forecasting) probabilistic time series forecasting models.
+This is the codebase for my [blog post](https://hasithv.github.io/posts/25-05-11-chronosinductionheads/) on finding induction heads in [Amazon's Chronos](https://github.com/amazon-science/chronos-forecasting) probabilistic time series forecasting models.
 
 ## Usage
 To get started, simply clone the repo and install the required packages
