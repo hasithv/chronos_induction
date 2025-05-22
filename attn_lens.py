@@ -8,20 +8,6 @@ def attn_lens(input_ids, attention_mask, t5_model, max_new_tokens=10, decoder_in
     # key is the pass number, value is a list of cross attention probabilities
     cross_attn_probs = {}
 
-    # Hook to save the cross attention probabilities
-    def save_cross_probs(module, inputs, outputs):
-        # T5Attention.forward returns a tuple:
-        #   (attn_output, present_key_value, position_bias, attn_probs)
-        #   outputs[3] is the attention probabilities (batch, heads, tgt_len, src_len)
-        pass_num = outputs[3].shape[2] - 1
-        cross_attn_probs[pass_num] = cross_attn_probs.get(pass_num, []) + [outputs[3].detach().cpu()]
-
-    hooks = []
-    for block in t5_model.decoder.block:
-        encdec_attn = block.layer[1].EncDecAttention
-        hooks.append(encdec_attn.register_forward_hook(save_cross_probs))
-
-
     outputs = t5_model.generate(input_ids=input_ids, 
                       attention_mask=attention_mask, 
                       max_new_tokens=max_new_tokens,
@@ -35,8 +21,12 @@ def attn_lens(input_ids, attention_mask, t5_model, max_new_tokens=10, decoder_in
                       return_dict_in_generate=True
                       )
     
-    for h in hooks:
-        h.remove()
+    for i in range(len(outputs.cross_attentions)):
+        # the k-th key represents the pass number
+        # for example, if k=1, then it means we are looking at the cross attentions when the decoder input has
+        # an input of [<dec_start>, t_1, t_2, ..., t_k]
+        k = i + decoder_input_ids.shape[-1] - 1 if decoder_input_ids is not None else i
+        cross_attn_probs[k] = [outputs.cross_attentions[i][j].detach().cpu() for j in range(len(outputs.cross_attentions[i]))]
 
     return outputs, cross_attn_probs
 
